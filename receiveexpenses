@@ -1,0 +1,288 @@
+"<!DOCTYPE html>
+<html lang=""en"">
+
+<head>
+    <meta charset=""UTF-8"">
+    <meta http-equiv=""X-UA-Compatible"" content=""IE=edge"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <script src=""https://cdn.tailwindcss.com""></script>
+    <script src=""https://static.line-scdn.net/liff/edge/versions/2.9.0/sdk.js""></script>
+    <!-- LineSeed Fonts -->
+    <link href=""https://cdn.jsdelivr.net/gh/maketline/goodday/font/stylesheet.min.css"" rel=""stylesheet"">
+    <style>
+        * {
+            font-family: 'line_seed_sans_th';
+            font-weight: bold;
+        }
+
+        a {
+            text-decoration: none;
+        }
+    </style>
+    <title>บันทึกรายรับรายจ่าย</title>
+</head>
+
+<body class=""bg-gradient-to-r from-teal-400 to-blue-500 font-sans flex items-center justify-center min-h-screen"">
+
+    <div class=""w-full max-w-lg bg-white p-8 rounded-lg shadow-xl transform transition-all duration-500 hover:scale-105"">
+        <h1 class=""text-4xl font-bold text-center text-gray-800 mb-8"">บันทึกรายรับรายจ่าย</h1>
+
+        <!-- โปรไฟล์ผู้ใช้ -->
+        <div id=""profile"" class=""text-center mb-8"">
+            <div id=""userName"" class=""text-xl font-semibold text-gray-800""></div>
+            <div id=""userImage"" class=""mt-4"">
+                <img id=""profilePicture"" class=""w-24 h-24 rounded-full mx-auto"" src="""" alt=""Profile Picture"">
+            </div>
+        </div>
+
+        <!-- ฟอร์มบันทึกข้อมูล -->
+        <form id=""recordForm"" class=""space-y-6"">
+            <!-- ซ่อนข้อมูล UID, Name -->
+            <input type=""hidden"" name=""uid"" id=""uid"">
+            <input type=""hidden"" name=""name"" id=""name"">
+
+            <!-- ประเภท -->
+            <div>
+                <label for=""type"" class=""block text-lg font-medium text-gray-700"">ประเภท:</label>
+                <select name=""type"" id=""type"" class=""mt-2 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 sm:text-lg transition duration-200 ease-in-out hover:border-teal-500"" required>
+                    <option value=""รายรับ"">รายรับ</option>
+                    <option value=""รายจ่าย"">รายจ่าย</option>
+                </select>
+            </div>
+
+            <!-- รายละเอียด -->
+            <div>
+                <label for=""description"" class=""block text-lg font-medium text-gray-700"">รายละเอียด:</label>
+                <input type=""text"" name=""description"" id=""description"" placeholder=""ระบุรายละเอียด""
+                    class=""mt-2 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 sm:text-lg transition duration-200 ease-in-out hover:border-teal-500"" required>
+            </div>
+
+            <!-- จำนวนเงิน -->
+            <div>
+                <label for=""amount"" class=""block text-lg font-medium text-gray-700"">จำนวนเงิน:</label>
+                <input type=""number"" name=""amount"" id=""amount"" placeholder=""ระบุจำนวนเงิน""
+                    class=""mt-2 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 sm:text-lg transition duration-200 ease-in-out hover:border-teal-500"" required>
+            </div>
+
+            <!-- ปุ่มส่ง -->
+            <div>
+                <input type=""submit"" id=""submitButton"" value=""บันทึกข้อมูล""
+                    class=""w-full py-3 px-6 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 transition duration-200 ease-in-out hover:scale-105 cursor-pointer"">
+            </div>
+        </form>
+
+        <!-- ข้อความสถานะ -->
+        <div id=""msg"" class=""text-center mt-4 text-sm text-gray-500""></div>
+    </div>
+
+    <script>
+        const liffId = ""xxxxxxxxxxxxxxxxxxxx""; // แทนที่ด้วย LIFF ID ของคุณ
+
+        async function initializeLiff() {
+            try {
+                await liff.init({ liffId });
+                console.log(""LIFF initialized successfully"");
+
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                    return;
+                }
+
+                const profile = await liff.getProfile();
+                document.querySelector(""#userName"").textContent = profile.displayName;
+                document.querySelector(""#profilePicture"").src = profile.pictureUrl;
+
+                document.querySelector(""#uid"").value = profile.userId;
+                document.querySelector(""#name"").value = profile.displayName;
+            } catch (error) {
+                console.error(""Error initializing LIFF:"", error);
+                document.querySelector(""#msg"").textContent = ""ไม่สามารถเริ่มต้น LIFF ได้"";
+                document.querySelector(""#msg"").classList.add(""text-red-500"");
+            }
+        }
+
+        document.querySelector(""#recordForm"").addEventListener(""submit"", async (e) => {
+            e.preventDefault();
+            const submitButton = document.querySelector(""#submitButton"");
+            const msgElement = document.querySelector(""#msg"");
+
+            submitButton.disabled = true;
+            submitButton.value = ""กำลังบันทึก..."";
+
+            const formData = new FormData(e.target);
+
+            try {
+                const response = await fetch('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/exec', {
+                    method: ""POST"",
+                    body: formData,
+                });
+
+                const result = await response.text();
+                msgElement.textContent = result;
+                msgElement.classList.remove(""text-red-500"");
+                msgElement.classList.add(""text-green-500"");
+
+                const name = document.querySelector(""#name"").value;
+                const type = document.querySelector(""#type"").value;
+                const description = document.querySelector(""#description"").value;
+                const amount = document.querySelector(""#amount"").value;
+                const profileImage = document.querySelector(""#profilePicture"").src;
+
+                // สร้าง FlexMessage
+               const flexMessage = {
+    type: ""flex"",
+    altText: ""ข้อมูลรายรับ/รายจ่าย"",
+    contents: {
+        type: ""bubble"",
+        hero: {
+            type: ""image"",
+            url: profileImage,
+            size: ""full"",
+            aspectRatio: ""20:13"",
+            aspectMode: ""cover""
+        },
+        body: {
+            type: ""box"",
+            layout: ""vertical"",
+            spacing: ""md"",
+            contents: [
+                {
+                    type: ""text"",
+                    text: `${type === ""รายรับ"" ? ""💵🔼 รายรับ"" : ""💸🔻 รายจ่าย""}`,
+                    weight: ""bold"",
+                    size: ""lg"",
+                    color: type === ""รายรับ"" ? ""#34D399"" : ""#F87171"", // สีเขียวสำหรับรายรับ และสีแดงสำหรับรายจ่าย
+                    wrap: true
+                },
+                {
+                    type: ""box"",
+                    layout: ""horizontal"",
+                    contents: [
+                        {
+                            type: ""text"",
+                            text: ""ผู้บันทึก:"",
+                            color: ""#6B7280"",
+                            size: ""sm"",
+                            flex: 1
+                        },
+                        {
+                            type: ""text"",
+                            text: name,
+                            weight: ""bold"",
+                            color: ""#111827"",
+                            size: ""sm"",
+                            flex: 2,
+                            wrap: true
+                        }
+                    ]
+                },
+                {
+                    type: ""box"",
+                    layout: ""horizontal"",
+                    contents: [
+                        {
+                            type: ""text"",
+                            text: ""รายละเอียด:"",
+                            color: ""#6B7280"",
+                            size: ""sm"",
+                            flex: 1
+                        },
+                        {
+                            type: ""text"",
+                            text: description,
+                            weight: ""bold"",
+                            color: ""#111827"",
+                            size: ""sm"",
+                            flex: 2,
+                            wrap: true
+                        }
+                    ]
+                },
+                {
+                    type: ""box"",
+                    layout: ""horizontal"",
+                    contents: [
+                        {
+                            type: ""text"",
+                            text: ""จำนวนเงิน:"",
+                            color: ""#6B7280"",
+                            size: ""sm"",
+                            flex: 1
+                        },
+                        {
+                            type: ""text"",
+                            text: `${type === ""รายรับ"" ? ""+"" : ""-""}${Number(amount).toLocaleString()} บาท`,
+                            weight: ""bold"",
+                            size: ""sm"",
+                            flex: 2,
+                            color: type === ""รายรับ"" ? ""#34D399"" : ""#F87171"",
+                            wrap: true
+                        }
+                    ]
+                },
+                {
+                    type: ""box"",
+                    layout: ""horizontal"",
+                    contents: [
+                        {
+                            type: ""text"",
+                            text: ""วันที่:"",
+                            color: ""#6B7280"",
+                            size: ""sm"",
+                            flex: 1
+                        },
+                        {
+                            type: ""text"",
+                            text: new Date().toLocaleDateString(),
+                            weight: ""bold"",
+                            size: ""sm"",
+                            flex: 2,
+                            color: ""#111827"",
+                            wrap: true
+                        }
+                    ]
+                }
+            ]
+        },
+        footer: {
+            type: ""box"",
+            layout: ""vertical"",
+            spacing: ""sm"",
+            contents: [
+                {
+                    type: ""button"",
+                    style: ""primary"",
+                    color: ""#3B82F6"",
+                    action: {
+                        type: ""uri"",
+                        label: ""ดูข้อมูลเพิ่มเติม"",
+                        uri: ""xxxxxxxxxxx"" // วางลิงค์ LIFF  Showdata
+                    }
+                }
+            ]
+        }
+    }
+};
+
+
+                // ส่ง FlexMessage
+                await liff.sendMessages([flexMessage]);
+
+                // ปิดหน้าต่าง LIFF
+                liff.closeWindow();
+            } catch (error) {
+                console.error(""Error submitting data or sending message:"", error);
+                msgElement.textContent = ""เกิดข้อผิดพลาดในการบันทึกข้อมูลหรือส่งข้อความ"";
+                msgElement.classList.add(""text-red-500"");
+            } finally {
+                submitButton.disabled = false;
+                submitButton.value = ""บันทึกข้อมูล"";
+            }
+        });
+
+        window.onload = initializeLiff;
+    </script>
+</body>
+
+</html>
+"
