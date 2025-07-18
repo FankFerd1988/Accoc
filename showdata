@@ -1,0 +1,464 @@
+"<!DOCTYPE html>
+<html lang=""th"">
+
+<head>
+    <meta charset=""UTF-8"">
+    <meta http-equiv=""X-UA-Compatible"" content=""IE=edge"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <script src=""https://cdn.tailwindcss.com""></script>
+    <script src=""https://static.line-scdn.net/liff/edge/versions/2.9.0/sdk.js""></script>
+    <script src=""https://cdn.jsdelivr.net/npm/chart.js""></script>
+    <script type=""text/javascript"" charset=""utf8"" src=""https://code.jquery.com/jquery-3.6.0.min.js""></script>
+    <script type=""text/javascript"" charset=""utf8"" src=""https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js""></script>
+    <link rel=""stylesheet"" href=""https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css"">
+    <link href=""https://cdn.jsdelivr.net/gh/maketline/goodday/font/stylesheet.min.css"" rel=""stylesheet"">
+    <script src=""https://cdn.jsdelivr.net/npm/sweetalert2@11""></script>
+    <style>
+        * {
+            font-family: 'line_seed_sans_th', sans-serif;
+        }
+
+        table.dataTable {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #ffffff;
+        }
+
+        table.dataTable thead {
+            background-color: #38b2ac;
+            color: #ffffff;
+        }
+
+        table.dataTable th,
+        table.dataTable td {
+            padding: 12px 10px;
+            text-align: center;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            background-color: #38b2ac;
+            color: #ffffff !important;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background-color: #319795;
+        }
+
+        .net-total-container {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+    <title>รายรับรายจ่าย</title>
+</head>
+
+<body class=""bg-gradient-to-r from-teal-400 to-blue-500"">
+    <!-- Navbar -->
+    <nav class=""bg-teal-500 p-4 shadow-md"">
+        <div class=""max-w-7xl mx-auto flex items-center justify-between text-white"">
+            <div class=""text-lg font-semibold"">ระบบบันทึกรายรับ-รายจ่าย</div>
+            <div>
+                <a href=""/receive-expenses.html"" class=""px-4 py-2 rounded-md text-white hover:bg-teal-600"">บันทึกรายการ</a>
+            </div>
+        </div>
+    </nav>
+
+    <div id=""contentContainer"">
+        <!-- ส่วนโปรไฟล์ -->
+        <section class=""p-4 bg-white shadow rounded-lg mx-4 mt-6"">
+            <div id=""profile"" class=""text-center"">
+                <img id=""profilePicture"" class=""w-20 h-20 rounded-full mx-auto mb-2"" src="""" alt=""Profile Picture"">
+                <div id=""userName"" class=""text-xl font-bold text-gray-800""></div>
+            </div>
+        </section>
+
+        <!-- กราฟ -->
+        <section class=""p-4 bg-white shadow rounded-lg mx-4 mt-4"">
+            <h2 class=""text-center font-bold text-gray-700 mb-4"">ภาพรวมรายรับ-รายจ่าย</h2>
+            <div class=""text-center mb-4 flex items-center justify-center space-x-4"">
+                <div>
+                    <label for=""yearSelector"" class=""block text-gray-600 font-medium"">เลือกปี:</label>
+                    <select id=""yearSelector"" class=""mt-1 border-gray-300 rounded-lg shadow-sm focus:ring focus:ring-teal-200"">
+                        <option value=""2023"">2023</option>
+                        <option value=""2024"">2024</option>
+                        <option value=""2025"">2025</option>
+                    </select>
+                </div>
+                <div>
+                    <label for=""monthSelector"" class=""block text-gray-600 font-medium"">เลือกเดือน:</label>
+                    <select id=""monthSelector"" class=""mt-1 border-gray-300 rounded-lg shadow-sm focus:ring focus:ring-teal-200"">
+                        <option value=""all"">ทั้งหมด</option>
+                        <option value=""1"">มกราคม</option>
+                        <option value=""2"">กุมภาพันธ์</option>
+                        <option value=""3"">มีนาคม</option>
+                        <option value=""4"">เมษายน</option>
+                        <option value=""5"">พฤษภาคม</option>
+                        <option value=""6"">มิถุนายน</option>
+                        <option value=""7"">กรกฎาคม</option>
+                        <option value=""8"">สิงหาคม</option>
+                        <option value=""9"">กันยายน</option>
+                        <option value=""10"">ตุลาคม</option>
+                        <option value=""11"">พฤศจิกายน</option>
+                        <option value=""12"">ธันวาคม</option>
+                    </select>
+                </div>
+            </div>
+            <div class=""pie-chart-container"">
+                <canvas id=""incomeExpenseChart""></canvas>
+            </div>
+            <div id=""netTotalDisplay"" class=""net-total-container"">
+                ยอดสุทธิ: 0.00 บาท
+            </div>
+            <div class=""text-center mt-4"">
+                <button id=""shareButton"" class=""px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600"">แชร์</button>
+            </div>
+        </section>
+
+        <!-- รายรับ -->
+        <section class=""p-4 bg-white shadow rounded-lg mx-4 mt-4"">
+            <h2 class=""text-xl font-bold text-gray-800 mb-4"">รายการรายรับ</h2>
+            <div class=""table-container"">
+                <table id=""incomeTable"" class=""display w-full text-sm"">
+                    <thead>
+                        <tr>
+                            <th>วันที่และเวลา</th>
+                            <th>ประเภท</th>
+                            <th>รายละเอียด</th>
+                            <th>จำนวนเงิน</th>
+                        </tr>
+                    </thead>
+                    <tbody id=""incomeTableBody""></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- รายจ่าย -->
+        <section class=""p-4 bg-white shadow rounded-lg mx-4 mt-4"">
+            <h2 class=""text-xl font-bold text-gray-800 mb-4"">รายการรายจ่าย</h2>
+            <div class=""table-container"">
+                <table id=""expenseTable"" class=""display w-full text-sm"">
+                    <thead>
+                        <tr>
+                            <th>วันที่และเวลา</th>
+                            <th>ประเภท</th>
+                            <th>รายละเอียด</th>
+                            <th>จำนวนเงิน</th>
+                        </tr>
+                    </thead>
+                    <tbody id=""expenseTableBody""></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const liffId = ""xxxxxxxxxxxxxxxxxxxxxx"";
+        let incomeData = [];
+        let expenseData = [];
+        let profile;
+
+        async function initialize() {
+            await liff.init({ liffId });
+            if (liff.isLoggedIn()) {
+                profile = await liff.getProfile();
+                document.getElementById('userName').textContent = profile.displayName;
+                document.getElementById('profilePicture').src = profile.pictureUrl;
+                fetchDataAndRender(profile.userId);
+            } else {
+                liff.login();
+            }
+        }
+
+        async function fetchDataAndRender(userId) {
+            try {
+                const response = await fetch(""xxxxxxxxxxxxxxxxxxxexec"");
+                const data = await response.json();
+                const userRecords = data.filter(record => record.Uid === userId);
+
+                incomeData = userRecords.filter(record => record.ประเภท === ""รายรับ"");
+                expenseData = userRecords.filter(record => record.ประเภท === ""รายจ่าย"");
+
+                incomeData.sort((a, b) => new Date(b.วันที่) - new Date(a.วันที่));
+                expenseData.sort((a, b) => new Date(b.วันที่) - new Date(a.วันที่));
+
+                filterDataAndRender('all', '2024');
+            } catch (error) {
+                console.error(""Error fetching data:"", error);
+            }
+        }
+
+        function filterDataAndRender(selectedMonth, selectedYear) {
+            let filteredIncomeData = incomeData;
+            let filteredExpenseData = expenseData;
+
+            // Filter by month and year
+            if (selectedMonth !== 'all') {
+                filteredIncomeData = incomeData.filter(record => new Date(record.วันที่).getMonth() + 1 == selectedMonth && new Date(record.วันที่).getFullYear() == selectedYear);
+                filteredExpenseData = expenseData.filter(record => new Date(record.วันที่).getMonth() + 1 == selectedMonth && new Date(record.วันที่).getFullYear() == selectedYear);
+            } else {
+                filteredIncomeData = incomeData.filter(record => new Date(record.วันที่).getFullYear() == selectedYear);
+                filteredExpenseData = expenseData.filter(record => new Date(record.วันที่).getFullYear() == selectedYear);
+            }
+
+            renderTable(""#incomeTableBody"", filteredIncomeData);
+            renderTable(""#expenseTableBody"", filteredExpenseData);
+            renderChart(filteredIncomeData, filteredExpenseData);
+        }
+
+        function renderTable(tableBodySelector, data) {
+            const tableBody = document.querySelector(tableBodySelector);
+            tableBody.innerHTML = data.map(record => `
+                <tr>
+                    <td>${new Date(record.วันที่).toLocaleString('th-TH')}</td>
+                    <td>${record.ประเภท}</td>
+                    <td>${record.รายละเอียด}</td>
+                    <td>${parseFloat(record.จำนวนเงิน).toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}</td>
+                </tr>
+            `).join('');
+
+            // Destroy the existing DataTable instance before reinitializing
+            if ($.fn.DataTable.isDataTable(tableBodySelector)) {
+                $(tableBodySelector).closest('table').DataTable().destroy();
+            }
+
+            $(tableBodySelector).closest('table').DataTable({
+                ""order"": [[0, 'desc']],
+                destroy: true,
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/2.1.8/i18n/th.json',
+                }
+            });
+        }
+
+        function renderChart(incomeData, expenseData) {
+            const incomeTotal = incomeData.reduce((sum, record) => sum + parseFloat(record.จำนวนเงิน), 0);
+            const expenseTotal = expenseData.reduce((sum, record) => sum + parseFloat(record.จำนวนเงิน), 0);
+            const netTotal = incomeTotal - expenseTotal;
+
+            const ctx = document.getElementById('incomeExpenseChart').getContext('2d');
+            if (window.chartInstance) {
+                window.chartInstance.destroy();
+            }
+            window.chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['รายรับ', 'รายจ่าย', 'ยอดสุทธิ'],
+                    datasets: [{
+                        data: [incomeTotal, expenseTotal, netTotal],
+                        backgroundColor: ['#38b2ac', '#e53e3e', netTotal >= 0 ? '#FAEB03' : '#FAEB03'],
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function (tooltipItem) {
+                                    const data = tooltipItem.raw;
+                                    if (tooltipItem.label === 'ยอดสุทธิ') {
+                                        return `ยอดสุทธิ: ${data.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}`;
+                                    }
+                                    return `${tooltipItem.label}: ${data.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}`;
+                                }
+                            }
+                        }
+                    },
+                    onClick: function (event, elements) {
+                        if (elements.length > 0) {
+                            const clickedElementIndex = elements[0].index;
+                            const selectedMonth = clickedElementIndex === 0 ? 'all' : clickedElementIndex === 1 ? 'all' : 'all';
+                            const selectedYear = document.getElementById('yearSelector').value;
+                            filterDataAndRender(selectedMonth, selectedYear);
+                        }
+                    }
+                }
+            });
+
+            // Update net total display
+            document.getElementById('netTotalDisplay').textContent = `ยอดสุทธิ: ${netTotal.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}`;
+        }
+
+        function createFlexMessage(incomeTotal, expenseTotal, netTotal, displayName, pictureUrl) {
+            return {
+                type: 'flex',
+                altText: 'รายรับ-รายจ่าย',
+                contents: {
+                    type: 'bubble',
+                    body: {
+                        type: 'box',
+                        layout: 'vertical',
+                        contents: [
+                            {
+                                type: 'text',
+                                text: 'รายรับ-รายจ่าย',
+                                weight: 'bold',
+                                size: 'xl',
+                                align: 'center'
+                            },
+                            {
+                                type: 'box',
+                                layout: 'vertical',
+                                contents: [
+                                    {
+                                        type: 'image',
+                                        url: pictureUrl,
+                                        aspectMode: ""cover"",
+                                        size: ""full"",
+                                        align: 'center'
+                                    }
+                                ],
+                                cornerRadius: ""100px"",
+                                width: ""72px"",
+                                height: ""72px""
+                            },
+                            {
+                                type: 'text',
+                                text: 'เจ้าของบัญชี: ' + displayName,
+                                weight: 'bold',
+                                size: 'sm',
+                                align: 'center'
+                            },
+                            {
+                                type: 'box',
+                                layout: 'vertical',
+                                margin: 'lg',
+                                spacing: 'sm',
+                                contents: [
+                                    {
+                                        type: 'box',
+                                        layout: 'baseline',
+                                        spacing: 'sm',
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: 'รายรับ',
+                                                color: '#1DB446',
+                                                size: 'sm',
+                                                flex: 1
+                                            },
+                                            {
+                                                type: 'text',
+                                                text: `${incomeTotal.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}`,
+                                                wrap: true,
+                                                color: '#666666',
+                                                size: 'sm',
+                                                flex: 2
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        type: 'box',
+                                        layout: 'baseline',
+                                        spacing: 'sm',
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: 'รายจ่าย',
+                                                color: '#FF5551',
+                                                size: 'sm',
+                                                flex: 1
+                                            },
+                                            {
+                                                type: 'text',
+                                                text: `${expenseTotal.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}`,
+                                                wrap: true,
+                                                color: '#666666',
+                                                size: 'sm',
+                                                flex: 2
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        type: 'box',
+                                        layout: 'baseline',
+                                        spacing: 'sm',
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: 'ยอดสุทธิ',
+                                                color: '#1DB446',
+                                                size: 'sm',
+                                                flex: 1
+                                            },
+                                            {
+                                                type: 'text',
+                                                text: `${netTotal.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}`,
+                                                wrap: true,
+                                                color: '#666666',
+                                                size: 'sm',
+                                                flex: 2
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            };
+        }
+
+        document.getElementById('monthSelector').addEventListener('change', function (event) {
+            filterDataAndRender(event.target.value, document.getElementById('yearSelector').value);
+        });
+
+        document.getElementById('yearSelector').addEventListener('change', function (event) {
+            filterDataAndRender(document.getElementById('monthSelector').value, event.target.value);
+        });
+
+        document.getElementById('shareButton').addEventListener('click', async function () {
+            const incomeTotal = incomeData.reduce((sum, record) => sum + parseFloat(record.จำนวนเงิน), 0);
+            const expenseTotal = expenseData.reduce((sum, record) => sum + parseFloat(record.จำนวนเงิน), 0);
+            const netTotal = incomeTotal - expenseTotal;
+
+            // Pass the actual profile picture URL to the Flex Message function
+            const flexMessage = createFlexMessage(incomeTotal, expenseTotal, netTotal, profile.displayName, profile.pictureUrl);
+
+            try {
+                const result = await liff.shareTargetPicker([flexMessage]);
+                if (result) {
+                    //alert('แชร์สำเร็จ');
+                    Swal.fire({
+                        position: ""top-end"",
+                        icon: ""success"",
+                        title: ""แชร์สำเร็จ"",
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
+                } else {
+                    Swal.fire({
+                        position: ""top-end"",
+                        icon: ""warning"",
+                        title: ""ยกเลิกการแชร์"",
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
+                }
+            } catch (error) {
+                console.error('Error sharing message:', error);
+                Swal.fire({
+                    position: ""top-end"",
+                    icon: ""error"",
+                    title: ""เกิดข้อผิดพลาดในการแชร์"",
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+            }
+        });
+
+        initialize();
+    </script>
+</body>
+
+</html>
+"
